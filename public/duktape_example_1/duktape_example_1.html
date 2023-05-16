@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script async type="text/javascript" src="./duktape_example_1.js"></script>
+  </head>
+  <body>
+    <p>Check the browser console for output.</p>
+    <script>
+      var Module = {
+        onRuntimeInitialized: function () {
+          const runScript = window.runScript
+            ? window.runScript
+            : Module.cwrap("runScript", null, ["string"]);
+
+          runScript(`
+            console.log("Hello from runScript");
+            console.error("Error: Hello from runScript");
+
+            duk_native_fetch("http://localhost:8080/static/duktape_example_1/duktape_example_1.html", function (response) {
+              console.log("response", response);
+            });
+
+            try {
+              throw new Error("Throw Error: Hello from runScript");
+            } catch (e) {
+              console.error(e);
+            }
+          `);
+
+          runScript(`
+            function logObjectProps(obj, name) {
+              for (var prop in obj) {
+                duk_native_print(name, "-->", prop, typeof obj[prop]);
+              }
+            }
+
+            function fibonacci(n) {
+              var result = [];
+              for (var i = 0; i < n; i++) {
+                if (i < 2) {
+                  result.push(1);
+                } else {
+                  result.push(result[i-2] + result[i-1]);
+                }
+              }
+              return result;
+            }
+
+            logObjectProps(this, "this");
+            logObjectProps(this.performance, "this.performance");
+
+            duk_native_print(this.performance.now());
+
+            var fibNumbers = fibonacci(100);
+            duk_native_print(fibNumbers);
+          `);
+        },
+      };
+
+      console.log("Loading duktape_example_1.js");
+      console.log("Module", Module);
+    </script>
+  </body>
+</html>
